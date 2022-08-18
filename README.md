@@ -4,7 +4,7 @@ Using Apache Airflow to Build a Pipeline for Scraped Data
 
 ```python
 **src/oxylabs.py:**
-```python
+
 import requests
 
 JOB_STATUS_DONE = 'done'
