@@ -3,8 +3,6 @@ Using Apache Airflow to Build a Pipeline for Scraped Data
 
 
 ```python
-**src/oxylabs.py:**
-
 import requests
 
 JOB_STATUS_DONE = 'done'
@@ -58,7 +56,6 @@ class Client:
 ```
 
 ```sql
-sql
 create sequence queue_seq;
 
 create table queue (
@@ -71,8 +68,6 @@ create table queue (
 
 ```
 
-```python
-**src/messenger.py:**
 ```python
 import atexit
 
@@ -168,7 +163,6 @@ class Queue:
 ```
 
 ```sql
-sql
 select * from queue where status = 'pending' and
 updated_at < now() - interval '10 second'
 order by random()
@@ -177,7 +171,6 @@ for update
 ```
 
 ```python
-python
     def __init__(self, connection):
         self.connection = connection
 
@@ -190,8 +183,6 @@ python
 ```
 
 ```python
-**src/bootstrap.py:**
-python
 import os
 
 import psycopg2
@@ -224,8 +215,6 @@ client = Client(
 ```
 
 ```python
-**src/setup.py:**
-python
 from bootstrap import queue
 
 success = queue.setup()
@@ -233,8 +222,6 @@ if not success:
     exit(1)
 ```
 
-```python
-**src/setup.py:**
 ```python
 from bootstrap import queue
 
@@ -247,7 +234,6 @@ The `exit(1)` on failure is extremely important, as it signifies that the proces
 
 Once the schema is created, we can **push** a collection of jobs in the Oxylabs Batch Query endpoint. 
 
-**src/pusher.py:**
 ```python
 from bootstrap import queue, client
 
@@ -265,8 +251,6 @@ for job in jobs['queries']:
 ```
 
 ```python
-**src/puller.py:**
-python
 from pprint import pprint
 from bootstrap import queue, client
 
@@ -293,7 +277,6 @@ for content in content_list:
 ```
 
 ```python
-python
 queue_item = queue.pull()
 if not queue_item:
     print('No jobs left in the queue, exiting')
@@ -301,7 +284,6 @@ if not queue_item:
 ```
 
 ```python
-python
 if not client.is_status_done(queue_item['job_id']):
     queue.touch(queue_item['job_id'])
     print('Job is not yet finished, skipping')
@@ -309,7 +291,6 @@ if not client.is_status_done(queue_item['job_id']):
 ```
 
 ```python
-python
 content_list = client.fetch_content_list(queue_item['job_id'])
 if content_list is None:
     print('Job no longer exists in oxy')
@@ -318,7 +299,6 @@ if content_list is None:
 ```
 
 ```python
-python
 queue.complete(queue_item['job_id'])
 
 for content in content_list:
@@ -326,7 +306,6 @@ for content in content_list:
 ```
 
 ```yaml
-text
 |-- src
 |   |-- bootstrap.py
 |   |-- messenger.py
@@ -338,7 +317,6 @@ text
 ```
 
 ```yaml
-yaml
 volumes:
     - ./dags:/opt/airflow/dags
     - ./logs:/opt/airflow/logs
@@ -346,7 +324,6 @@ volumes:
 ```
 
 ```yaml
-yaml
 volumes:
     - ./src:/opt/airflow/src
     - ./dags:/opt/airflow/dags
@@ -355,7 +332,6 @@ volumes:
 ```
 
 ```yaml
-text
 |-- dags
 |-- docker-compose.yaml
 |-- .env
@@ -371,7 +347,6 @@ text
 ```
 
 ```yaml
-text
 |-- dags
 |   |-- scrape.py
 |-- docker-compose.yaml
@@ -388,8 +363,6 @@ text
 
 ```
 
-```python
-**dags/setup.py:**
 ```python
 from datetime import timedelta
 
@@ -420,7 +393,6 @@ with DAG(
 ```
 
 ```python
-python
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
@@ -430,7 +402,6 @@ default_args = {
 ```
 
 ```python
-yaml
 with DAG(
         'setup',
         default_args=default_args,
@@ -444,15 +415,12 @@ with DAG(
 ```
 
 ```python
-python
     setup_task = BashOperator(
         task_id='setup',
         bash_command='python /opt/airflow/src/setup.py',
     )
 ```
 
-```python
-**dags/push-pull.py:**
 ```python
 from datetime import timedelta
 
@@ -490,7 +458,6 @@ with DAG(
 ```
 
 ```python
-python
     task_push = BashOperator(
         task_id='push',
         bash_command='python /opt/airflow/src/pusher.py',
@@ -506,7 +473,6 @@ python
 ```
 
 ```python
-python
 from datetime import timedelta
 
 import pendulum
@@ -552,8 +518,6 @@ with DAG(
     )
 ```
 
-```python
-**dags/scrape.py:**
 ```python
 from datetime import timedelta
 
