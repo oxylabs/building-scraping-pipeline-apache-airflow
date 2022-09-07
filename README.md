@@ -445,6 +445,10 @@ Once you set it up, a bunch of Airflow specific files and folders are created.
 |   |-- setup.py
 ```
 
+Now visit `http://localhost:8080` and use the default credentials (`airflow:airflow`) to access the Airflow UI. 
+
+![](https://images.prismic.io/oxylabs-sm/9565f060-60e3-4b7e-8e5d-ced99436ff0e_5.png?auto=compress,format&fm=webp&dpr=2&q=50)
+
 ```yaml
 |-- dags
 |   |-- scrape.py
