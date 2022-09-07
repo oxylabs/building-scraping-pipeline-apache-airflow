@@ -94,19 +94,12 @@ create table queue (
 Our new table contains the following fields:
 
 `id`: a numerical value that uniquely identifies the record.
-
 `created_at`: a timestamp that shows when the record was created.
-
 `updated_at`: a timestamp that shows when the record was last updated.
-
 `job_id`: Oxylabs E-Commerce API job identifier.
-
 `status`: a value that describes what the current state of the job is.
-
 `pending` status means that the job is still processing.
-
 `completed` means that the job is already done.
-
 `deleted` means that we took too long to fetch the data, and the job has been deleted in Oxylabs API.
 
 Now let's create a `Queue` class for interacting with the database: 
@@ -204,6 +197,13 @@ class Queue:
     def cleanup(self):
         self.connection.commit()
 ```
+The most important methods of the `Queue` class are as follows:
+
+`setup`: asks the database whether the table `queue` already exists. If it doesn't, it creates the queue table.
+`push`: pushes the job to the database. The job id is retrieved from the Oxylabs Batch Query Endpoint.
+`pull`: fetches a single job that is ready to be checked for content.
+
+Let's focus on the pull part: 
 
 ```sql
 select * from queue where status = 'pending' and
