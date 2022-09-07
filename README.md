@@ -89,8 +89,27 @@ create table queue (
   status varchar(255) not null DEFAULT 'pending',
   job_id varchar(255)
 )
-
 ```
+
+Our new table contains the following fields:
+
+`id`: a numerical value that uniquely identifies the record.
+
+`created_at`: a timestamp that shows when the record was created.
+
+`updated_at`: a timestamp that shows when the record was last updated.
+
+`job_id`: Oxylabs E-Commerce API job identifier.
+
+`status`: a value that describes what the current state of the job is.
+
+`pending` status means that the job is still processing.
+
+`completed` means that the job is already done.
+
+`deleted` means that we took too long to fetch the data, and the job has been deleted in Oxylabs API.
+
+Now let's create a `Queue` class for interacting with the database: 
 
 ```python
 import atexit
