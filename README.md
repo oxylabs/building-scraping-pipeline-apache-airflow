@@ -1,6 +1,18 @@
-# building-scraping-pipeline-apache-airflow
+# Using Apache Airflow to Build a Pipeline for Scraped Data
 Using Apache Airflow to Build a Pipeline for Scraped Data 
 
+Using E-Commerce Scraper API
+Oxylabs has a wide variety of tools depending on your project and scraping goals; for today’s tutorial, we’re specifically going to be using the E-Commerce Scraper API.  
+
+Also, we recommend using the Push-Pull approach – it’s known as the most reliable data delivery method out there. 
+
+To use this approach effectively, you have to: 
+
+1. Submit a URL of a website you want to scrape
+2. Check whether the URL has been scraped
+3. Fetch the content
+
+Let's start by building a class that will serve as a wrapper for the API.
 
 ```python
 import requests
@@ -54,6 +66,18 @@ class Client:
 
         return job_results_json['results']
 ```
+
+The client provides 3 methods:
+
+`create_jobs` uses the batch query to submit URLs for scraping. 
+
+`is_status_done` checks the status of the previously submitted URL. 
+
+`fetch_content_list` retrieves the content of the URL that has been scraped. 
+
+Keep in mind that once we push the URL to the API, we’ll receive a job ID for fetching the content later. Hence, the job ID needs to be stored somewhere – we'll use PostgreSQL for it. 
+
+Let's design a simple table that will represent queued jobs:
 
 ```sql
 create sequence queue_seq;
