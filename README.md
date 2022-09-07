@@ -322,6 +322,8 @@ for job in jobs['queries']:
 
 The script creates a bunch of jobs using the Oxylabs Client we created earlier. It then goes through each and every result and pushes it into the database using the Queue service.
 
+![](https://images.prismic.io/oxylabs-sm/a260d754-58ca-4ed0-9c9c-a706280d3c7d_4.png?auto=compress,format&fm=webp&dpr=2&q=50)
+
 The submitted jobs will soon be processed. In the meantime, we can use the job ID in our database to fetch the content – let’s create a file that will do exactly that.
 
 ```python
