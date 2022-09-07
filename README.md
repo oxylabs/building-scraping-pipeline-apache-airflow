@@ -449,6 +449,18 @@ Now visit `http://localhost:8080` and use the default credentials (`airflow:airf
 
 ![](https://images.prismic.io/oxylabs-sm/9565f060-60e3-4b7e-8e5d-ced99436ff0e_5.png?auto=compress,format&fm=webp&dpr=2&q=50)
 
+Airflow uses a concept called DAG (Directed Acyclic Graph), which is a collection of all the tasks you want to run, organized in a way that reflects their relationships and dependencies.
+
+![](https://images.prismic.io/oxylabs-sm/adc49025-2478-4995-8d75-7d1980197e1f_dag.png?auto=compress,format&fm=webp&dpr=2&q=50)
+
+A DAG is defined in a Python script, which represents the DAGs structure (tasks and their dependencies) as code.
+
+To create a DAG file, we have to create a python script in the `dags` folder of the airflow project.
+
+Let's call it `scrape.py`. 
+
+Here's what the final file structure looks like:
+
 ```yaml
 |-- dags
 |   |-- scrape.py
@@ -465,6 +477,9 @@ Now visit `http://localhost:8080` and use the default credentials (`airflow:airf
 |   |-- setup.py
 
 ```
+
+## Creating a DAG
+Let's create a simple DAG that sets up the table by calling the `setup.py` script we created earlier.
 
 ```python
 from datetime import timedelta
@@ -495,6 +510,8 @@ with DAG(
     )
 ```
 
+Every DAG has a bunch of arguments that allow you to configure execution.
+
 ```python
 default_args = {
     'owner': 'airflow',
@@ -503,6 +520,16 @@ default_args = {
     'retry_delay': timedelta(hours=3),
 }
 ```
+
+The `owner` property describes the system user that owns this DAG.
+
+`retries` determines how many additional attempts to run this script will be made if it fails. 
+
+`retry_delay` tells us how often to retry (related to the previous parameter).
+
+`depends_on_past` is extremely important for multi-stage workflows – it determines whether the previous task needs to be successful to run our setup script.
+
+Next come the DAG parameters:
 
 ```python
 with DAG(
@@ -517,12 +544,34 @@ with DAG(
 ) as dag:
 ```
 
+Here are the most important parameters:
+
+The first parameter (`setup`) always signifies the name of the DAG, which you will see in the Airflow UI.
+
+`schedule_interval` muses cron-like format to determine how often to run the task.
+
+`start_date` describes when the task has to be started. 
+
+`catchup` determines whether Airflow needs to catch up to the current date by running the scripts for earlier dates
+
+Next comes the most important part: every DAG defines what tasks need to be done. 
+
 ```python
     setup_task = BashOperator(
         task_id='setup',
         bash_command='python /opt/airflow/src/setup.py',
     )
 ```
+
+Tasks are defined using Operators, which allow you to describe what needs to be done. For us, the easiest way is to simply run the `setup.py` file using a bash command.
+
+Our file is automatically registered and displayed in the Airflow UI.
+
+![](https://images.prismic.io/oxylabs-sm/d7de32a6-1ea3-441f-b1b9-b7e9838d63a4_6.png?auto=compress,format&fm=webp&dpr=2&q=50)
+
+## Defining multiple tasks
+
+We previously defined a DAG with a single task. While that is a great achievement, the main power of Airflow comes from managing multiple tasks. Let's leverage that by creating a push-pull workflow:
 
 ```python
 from datetime import timedelta
@@ -560,6 +609,14 @@ with DAG(
     task_push.set_downstream(task_pull)
 ```
 
+Most of the code remains the same. There is a major difference though: we now have two tasks: `task_pull` and `task_push`. Once we create them, we use the `set_downstream` to tell Airflow that `task_pull` needs to be executed after `task_push`.
+
+![](https://images.prismic.io/oxylabs-sm/464b4aa8-dcd9-41d8-aec9-7cb1d515a6cf_7.png?auto=compress,format&fm=webp&dpr=2&q=50)
+
+## Using ShortCircuitOperator
+
+Our previous DAG has a glaring issue: we want to execute push once as it uses the batch endpoint. The pull task, however, needs to run multiple times. Unfortunately, tasks in the same dag cannot use different intervals.
+
 ```python
     task_push = BashOperator(
         task_id='push',
@@ -572,8 +629,11 @@ with DAG(
         bash_command='python /opt/airflow/src/puller.py',
         schedule_interval='@hourly', # not allowed!
     )
-
 ```
+
+While it is indeed possible to solve that by creating multiple DAGs, it ruins many advantages Airflow provides in managing the dependencies of the tasks. Let’s take a look at how this can be fixed. 
+
+Enter `ShortCircuitOperator`. This powerful operator can skip tasks if conditions are not met.
 
 ```python
 from datetime import timedelta
@@ -621,6 +681,17 @@ with DAG(
     )
 ```
 
+Even though the schedule interval is set to `* * * * *`, which means `execute every minute`, but we add an additional `once_per_day` task, that prevents the `push` task from running unless the current hour is '0'.
+
+The main player here is the `is_midnight` function, that checks whether the current time is 00:00 (the only time when the push command is allowed to run!)
+
+![](https://images.prismic.io/oxylabs-sm/f3017157-b222-4c9d-b0fe-3ae5fa9af6b0_8.png?auto=compress,format&fm=webp&dpr=2&q=50)
+
+## Combining all tasks
+You might be curious whether combining all our tasks into a single workflow is possible. Luckily, it is – let’s look at how it’s done. 
+
+Again, by using `ShortCircuitOperator` we’re able to circumvent the task limitations.
+
 ```python
 from datetime import timedelta
 
@@ -665,6 +736,7 @@ with DAG(
     )
 
     trigger_once.set_downstream(setup_task)
+    
 def is_midnight(logical_date):
         return logical_date.hour == 0 and logical_date.minute == 0
 
@@ -688,5 +760,18 @@ def is_midnight(logical_date):
 
     trigger_always.set_downstream(task_pull)
     trigger_always.set_downstream(trigger_once_per_day)
-
 ```
+
+Here we add three helper tasks:
+
+`always` - executed everytime
+
+`once` - executed one time
+
+`once_per_day` - executed daily
+
+The implementation of the new tasks depends on a special variable called `prev_start_date_success`. It contains the start date from the previous run (if available). It allows us to determine whether any previous runs exist.
+
+Here's how our final workflow looks like:
+
+![](https://images.prismic.io/oxylabs-sm/77ffacd1-6175-42f5-b1da-7076000bdbe2_9.png?auto=compress,format&fm=webp&dpr=2&q=50)
