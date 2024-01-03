@@ -21,10 +21,10 @@ Let's start by building a class that will serve as a wrapper for the API.
 ```python
 import requests
 
-JOB_STATUS_DONE = 'done'
+
+JOB_STATUS_DONE = "done"
 
 HTTP_NO_CONTENT = 204
-
 
 class Client:
     def __init__(self, username, password):
@@ -33,13 +33,34 @@ class Client:
 
     def create_jobs(self, urls):
         payload = {
-            'source': 'universal_ecommerce',
-            'url': urls
+            "source": "universal_ecommerce",
+            "url": urls,
+            "parse": True,
+            "parsing_instructions": {
+                "title": {
+                    "_fns": [
+                        {"_fn": "css_one", "_args": ["h2"]},
+                        {"_fn": "element_text"},
+                    ]
+                },
+                "price": {
+                    "_fns": [
+                        {"_fn": "css_one", "_args": [".price"]},
+                        {"_fn": "element_text"},
+                    ]
+                },
+                "availability": {
+                    "_fns": [
+                        {"_fn": "css_one", "_args": [".availability"]},
+                        {"_fn": "element_text"},
+                    ]
+                },
+            },
         }
 
         response = requests.request(
-            'POST',
-            'https://data.oxylabs.io/v1/queries/batch',
+            "POST",
+            "https://data.oxylabs.io/v1/queries/batch",
             auth=(self.username, self.password),
             json=payload,
         )
@@ -48,19 +69,19 @@ class Client:
 
     def is_status_done(self, job_id):
         job_status_response = requests.request(
-            method='GET',
-            url='http://data.oxylabs.io/v1/queries/%s' % job_id,
+            method="GET",
+            url="http://data.oxylabs.io/v1/queries/%s" % job_id,
             auth=(self.username, self.password),
         )
 
         job_status_data = job_status_response.json()
 
-        return job_status_data['status'] == JOB_STATUS_DONE
+        return job_status_data["status"] == JOB_STATUS_DONE
 
     def fetch_content_list(self, job_id):
         job_result_response = requests.request(
-            method='GET',
-            url='http://data.oxylabs.io/v1/queries/%s/results' % job_id,
+            method="GET",
+            url="http://data.oxylabs.io/v1/queries/%s/results" % job_id,
             auth=(self.username, self.password),
         )
         if job_result_response.status_code == HTTP_NO_CONTENT:
@@ -68,7 +89,7 @@ class Client:
 
         job_results_json = job_result_response.json()
 
-        return job_results_json['results']
+        return job_results_json["results"]
 ```
 
 The client provides 3 methods:
@@ -312,11 +333,11 @@ Once the schema is created, we can **push** a collection of jobs in the Oxylabs 
 from bootstrap import queue, client
 
 jobs = client.create_jobs([
-    'https://books.toscrape.com/catalogue/sapiens-a-brief-history-of-humankind_996/index.html',
-    'https://books.toscrape.com/catalogue/sharp-objects_997/index.html',
-    'https://books.toscrape.com/catalogue/soumission_998/index.html',
-    'https://books.toscrape.com/catalogue/tipping-the-velvet_999/index.html',
-    'https://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html',
+        "https://sandbox.oxylabs.io/products/1",
+        "https://sandbox.oxylabs.io/products/2",
+        "https://sandbox.oxylabs.io/products/3",
+        "https://sandbox.oxylabs.io/products/4",
+        "https://sandbox.oxylabs.io/products/5",
 ])
 
 for job in jobs['queries']:
@@ -643,11 +664,11 @@ Enter `ShortCircuitOperator`. This powerful operator can skip tasks if condition
 
 ```python
 from datetime import timedelta
-
 import pendulum
 from airflow import DAG
 from airflow.operators.bash import BashOperator
 from airflow.operators.python import ShortCircuitOperator
+
 
 default_args = {
     'owner': 'airflow',
@@ -700,11 +721,11 @@ Again, by using `ShortCircuitOperator` we’re able to circumvent the task limit
 
 ```python
 from datetime import timedelta
-
 import pendulum
 from airflow import DAG
 from airflow.operators.bash import BashOperator
 from airflow.operators.python import ShortCircuitOperator
+
 
 default_args = {
     'owner': 'airflow',
@@ -742,7 +763,6 @@ with DAG(
     )
 
     trigger_once.set_downstream(setup_task)
-    
 def is_midnight(logical_date):
         return logical_date.hour == 0 and logical_date.minute == 0
 
