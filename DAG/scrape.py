@@ -41,7 +41,8 @@ with DAG(
     )
 
     trigger_once.set_downstream(setup_task)
-def is_midnight(logical_date):
+
+    def is_midnight(logical_date):
         return logical_date.hour == 0 and logical_date.minute == 0
 
     trigger_once_per_day = ShortCircuitOperator(

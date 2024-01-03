@@ -1,13 +1,16 @@
 from bootstrap import queue, client
 
-jobs = client.create_jobs([
-    'https://books.toscrape.com/catalogue/sapiens-a-brief-history-of-humankind_996/index.html',
-    'https://books.toscrape.com/catalogue/sharp-objects_997/index.html',
-    'https://books.toscrape.com/catalogue/soumission_998/index.html',
-    'https://books.toscrape.com/catalogue/tipping-the-velvet_999/index.html',
-    'https://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html',
-])
+jobs = client.create_jobs(
+    [
+        "https://sandbox.oxylabs.io/products/1",
+        "https://sandbox.oxylabs.io/products/2",
+        "https://sandbox.oxylabs.io/products/3",
+        "https://sandbox.oxylabs.io/products/4",
+        "https://sandbox.oxylabs.io/products/5",
+    ]
+)
 
-for job in jobs['queries']:
-    queue.push(job['id'])
-    print('job id: %s' % job['id'])
+
+for job in jobs["queries"]:
+    queue.push(job["id"])
+    print("job id: %s" % job["id"])
