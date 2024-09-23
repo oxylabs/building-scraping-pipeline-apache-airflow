@@ -35,7 +35,7 @@ class Client:
 
     def create_jobs(self, urls):
         payload = {
-            "source": "universal_ecommerce",
+            "source": "universal",
             "url": urls,
             "parse": True,
             "parsing_instructions": {
