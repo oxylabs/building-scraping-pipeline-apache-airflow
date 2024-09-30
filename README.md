@@ -5,10 +5,7 @@
 
 [![](https://dcbadge.vercel.app/api/server/eWsVUJrnG5)](https://discord.gg/GbxmdGhZjq)
 
-Using Apache Airflow to Build a Pipeline for Scraped Data 
-
-Using E-Commerce Scraper API
-Oxylabs has a wide variety of tools depending on your project and scraping goals; for today’s tutorial, we’re specifically going to be using the E-Commerce Scraper API.  
+Using Oxylabs E-Commerce Scraper API (a part of Web Scraper API) has a wide variety of tools depending on your project and scraping goals. 
 
 Also, we recommend using the Push-Pull approach – it’s known as the most reliable data delivery method out there. 
 
@@ -126,7 +123,7 @@ Our new table contains the following fields:
 
 `updated_at`: a timestamp that shows when the record was last updated.
 
-`job_id`: Oxylabs E-Commerce API job identifier.
+`job_id`: Oxylabs API job identifier.
 
 `status`: a value that describes what the current state of the job is.
 
